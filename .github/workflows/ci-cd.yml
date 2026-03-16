@@ -105,12 +105,23 @@ jobs:
 
       - name: Configure kubectl
         run: |
+          if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
+            echo "KUBE_CONFIG secret is missing. Add a base64-encoded kubeconfig in GitHub Secrets."
+            exit 1
+          fi
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
 
-      - name: Update image tag in deployment
+      - name: Validate cluster access
         run: |
-          sed -i "s|IMAGE_TAG|${{ env.DOCKER_TAG }}|g" k8s/deployment.yaml
+          kubectl config get-contexts
+          kubectl config current-context
+          kubectl cluster-info
+
+      - name: Update deployment image
+        run: |
+          IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}"
+          sed -i "s|REPLACE_WITH_IMAGE|${IMAGE_NAME}|g" k8s/deployment.yaml
 
       - name: Apply Kubernetes manifests
         run: |

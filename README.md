@@ -83,6 +83,12 @@ ansible-playbook -i inventory.ini playbook.yml
 ## Kubernetes (Local with Docker Desktop)
 ```bash
 # Enable Kubernetes in Docker Desktop Settings first
+# Make sure kubectl is using the docker-desktop context
+kubectl config use-context docker-desktop
+
+# Replace the placeholder image with a real image you pushed to Docker Hub
+# Example: ANTO-MELVIN/resqnet-app:latest
+
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
 kubectl get pods
