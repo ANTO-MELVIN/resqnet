@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  resqnet-app:
+    build:
+      context: ../app
+      dockerfile: ../docker/Dockerfile
+    container_name: resqnet-app
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - APP_NAME=ResQNet
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - resqnet-network
+
+networks:
+  resqnet-network:
+    driver: bridge
