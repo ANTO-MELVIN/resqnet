@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: resqnet-app
-          image: REPLACE_WITH_IMAGE
+          image: antomelvin/resqnet-app:latest
           ports:
             - containerPort: 5000
           env:

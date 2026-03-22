@@ -1,2 +1,6 @@
 flask==3.0.0
 gunicorn==21.2.0
+pymongo==4.10.1
+dnspython==2.7.0
+certifi==2025.10.5
+flask-cors==5.0.0
