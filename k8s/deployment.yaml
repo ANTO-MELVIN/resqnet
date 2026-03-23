@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: resqnet-deployment
+  namespace: resqnet
   labels:
     app: resqnet
     version: "1.0"
@@ -23,11 +24,17 @@ spec:
       containers:
         - name: resqnet-app
           image: antomelvin/resqnet-app:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 5000
           env:
             - name: FLASK_ENV
               value: "production"
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: resqnet-secrets
+                  key: MONGO_URI
           resources:
             requests:
               memory: "128Mi"
