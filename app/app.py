@@ -76,28 +76,30 @@ def next_id(collection):
 
 def require_db():
     if alerts_collection is None or reports_collection is None or resources_collection is None:
-        raise RuntimeError(db_error or "MongoDB Atlas is not connected.")
+        raise RuntimeError(db_error or "MongoDB is not connected.")
 
 
 def init_database():
     global mongo_client, alerts_collection, reports_collection, resources_collection, db_error
 
     if not MONGO_URI:
-        db_error = "MONGO_URI is not set. Provide a MongoDB Atlas URI."
+        db_error = "MONGO_URI is not set. Provide a MongoDB URI."
         print(f"[ResQNet] {db_error}")
         return
 
-    if not MONGO_URI.startswith("mongodb+srv://"):
-        db_error = "Only MongoDB Atlas (mongodb+srv://) is allowed in this configuration."
+    if not (MONGO_URI.startswith("mongodb+srv://") or MONGO_URI.startswith("mongodb://")):
+        db_error = "MONGO_URI must start with mongodb+srv:// or mongodb://"
         print(f"[ResQNet] {db_error}")
         return
 
     try:
-        mongo_client = MongoClient(
-            MONGO_URI,
-            serverSelectionTimeoutMS=10000,
-            tlsCAFile=certifi.where(),
-        )
+        client_kwargs = {
+            "serverSelectionTimeoutMS": 10000,
+        }
+        if MONGO_URI.startswith("mongodb+srv://"):
+            client_kwargs["tlsCAFile"] = certifi.where()
+
+        mongo_client = MongoClient(MONGO_URI, **client_kwargs)
         mongo_client.admin.command("ping")
         db = mongo_client["resqnet"]
         alerts_collection = db["alerts"]
@@ -110,12 +112,12 @@ def init_database():
             resources_collection.insert_many(seed_resources)
 
         db_error = None
-        print("[ResQNet] Connected to MongoDB Atlas.")
+        print("[ResQNet] Connected to MongoDB.")
     except PyMongoError as exc:
         alerts_collection = None
         reports_collection = None
         resources_collection = None
-        db_error = f"MongoDB Atlas connection failed: {exc}"
+        db_error = f"MongoDB connection failed: {exc}"
         print(f"[ResQNet] {db_error}")
 
 
@@ -186,6 +188,23 @@ def health():
             "app": "ResQNet API",
             "dbConnected": db_error is None,
             "dbError": db_error,
+        }
+    )
+
+
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify(
+        {
+            "app": "ResQNet API",
+            "message": "ResQNet backend is running.",
+            "dbConnected": db_error is None,
+            "endpoints": [
+                "/health",
+                "/api/alerts",
+                "/api/reports",
+                "/api/resources",
+            ],
         }
     )
 

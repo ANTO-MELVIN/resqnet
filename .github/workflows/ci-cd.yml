@@ -77,6 +77,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: docker-build
     if: github.ref == 'refs/heads/main'
+    env:
+      IMAGE: ${{ secrets.DOCKER_USERNAME }}/resqnet-app:${{ github.sha }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -85,27 +87,28 @@ jobs:
           curl -LO "https://dl.k8s.io/release/v1.28.0/bin/linux/amd64/kubectl"
           chmod +x kubectl && sudo mv kubectl /usr/local/bin/
           kubectl version --client
-      - name: Show deployment manifests
+      - name: Configure kubeconfig
         run: |
-          echo "=== deployment.yaml ===" && cat k8s/deployment.yaml
-          echo "=== service.yaml ===" && cat k8s/service.yaml
-      - name: Simulate Kubernetes deployment
+          mkdir -p "$HOME/.kube"
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+          kubectl config current-context
+      - name: Create or update app secrets
         run: |
-          echo "kubectl apply -f k8s/deployment.yaml"
-          echo "> deployment.apps/resqnet-deployment created"
-          echo ""
-          echo "kubectl apply -f k8s/service.yaml"
-          echo "> service/resqnet-service created"
-          echo ""
-          echo "kubectl get pods"
-          echo "> NAME                                  READY   STATUS    RESTARTS   AGE"
-          echo "> resqnet-deployment-5d8f9b7c4-xk2p9   1/1     Running   0          30s"
-          echo "> resqnet-deployment-5d8f9b7c4-m7nq1   1/1     Running   0          30s"
-          echo ""
-          echo "kubectl get services"
-          echo "> NAME               TYPE       CLUSTER-IP      PORT(S)        AGE"
-          echo "> resqnet-service    NodePort   10.96.45.123    80:30080/TCP   30s"
-          echo ""
-          echo "ResQNet deployed! App running at http://localhost:30080"
-          echo "Pipeline complete: Git -> CI/CD -> Docker -> Kubernetes -> Running App"
+          kubectl apply -f k8s/namespace.yaml
+          kubectl create secret generic resqnet-secrets \
+            -n resqnet \
+            --from-literal=MONGO_URI='${{ secrets.MONGO_URI }}' \
+            --dry-run=client -o yaml | kubectl apply -f -
+      - name: Deploy manifests
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+      - name: Update image and verify rollout
+        run: |
+          kubectl set image deployment/resqnet-deployment resqnet-app=${IMAGE} -n resqnet
+          kubectl rollout status deployment/resqnet-deployment --timeout=180s -n resqnet
+          kubectl get pods -l app=resqnet -o wide -n resqnet
+          kubectl get service resqnet-service -o wide -n resqnet
  
