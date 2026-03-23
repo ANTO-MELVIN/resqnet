@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQNet - Disaster Response Platform</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <h1>🚨 ResQNet</h1>
+                <p>Emergency Response Network</p>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#alerts" class="nav-link">Alerts</a></li>
+                <li><a href="#resources" class="nav-link">Resources</a></li>
+                <li><a href="#reports" class="nav-link">Reports</a></li>
+                <li><a href="#status" class="nav-link">Status</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h2>Real-Time Disaster Response Coordination</h2>
+            <p>Connect resources, respond to emergencies, and save lives</p>
+            <button class="btn btn-primary" onclick="scrollToSection('alerts')">View Live Alerts</button>
+        </div>
+    </section>
+
+    <section id="status" class="status-section">
+        <div class="container">
+            <h2>System Status</h2>
+            <div class="status-cards">
+                <div class="status-card">
+                    <h3>Backend</h3>
+                    <p id="backend-status" class="status-loading">Checking...</p>
+                </div>
+                <div class="status-card">
+                    <h3>Database</h3>
+                    <p id="db-status" class="status-loading">Checking...</p>
+                </div>
+                <div class="status-card">
+                    <h3>Active Alerts</h3>
+                    <p id="alert-count" class="status-loading">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="alerts" class="alerts-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>🚨 Active Emergency Alerts</h2>
+                <button class="btn btn-secondary" onclick="loadAlerts()">Refresh</button>
+            </div>
+            <div id="alerts-container" class="alerts-grid">
+                <p class="loading">Loading alerts...</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="resources" class="resources-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>📍 Available Resources</h2>
+                <button class="btn btn-secondary" onclick="loadResources()">Refresh</button>
+            </div>
+            <div id="resources-container" class="resources-grid">
+                <p class="loading">Loading resources...</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="reports" class="reports-section">
+        <div class="container">
+            <h2>📋 Emergency Reports</h2>
+            <div class="reports-wrapper">
+                <div class="report-form">
+                    <h3>Submit New Report</h3>
+                    <form id="reportForm" onsubmit="submitReport(event)">
+                        <div class="form-group">
+                            <label for="location">Location</label>
+                            <input type="text" id="location" name="location" placeholder="Enter location" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea id="description" name="description" placeholder="Describe the emergency" rows="4" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Report</button>
+                    </form>
+                </div>
+                <div class="reports-list">
+                    <h3>Recent Reports</h3>
+                    <div id="reports-container" class="reports-grid">
+                        <p class="loading">Loading reports...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 ResQNet - Disaster Response Platform. All rights reserved.</p>
+            <p>Backend: <span id="footer-status">Initializing...</span></p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
