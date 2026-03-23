@@ -64,6 +64,40 @@ Go to GitHub → Settings → Secrets and add:
 - `DOCKER_USERNAME` — your Docker Hub username
 - `DOCKER_PASSWORD` — your Docker Hub password/token
 - `KUBE_CONFIG`     — base64-encoded kubeconfig (for cloud deployment)
+- `MONGO_URI`       — MongoDB connection string used by the app in Kubernetes
+
+## Real Kubernetes Deployment (Cloud or Managed Cluster)
+
+This repository is now configured for a real deploy from GitHub Actions (not a simulated one).
+
+### 1. Prepare kubeconfig secret value
+Use a machine that can access your cluster:
+
+```bash
+cat ~/.kube/config | base64 -w 0
+```
+
+Copy output to GitHub secret `KUBE_CONFIG`.
+
+### 2. Set all required GitHub Secrets
+- `DOCKER_USERNAME`
+- `DOCKER_PASSWORD`
+- `KUBE_CONFIG`
+- `MONGO_URI`
+
+### 3. Push to `main`
+CI will:
+- Build and push image to Docker Hub
+- Create/update Kubernetes secret `resqnet-secrets`
+- Apply `k8s/deployment.yaml` and `k8s/service.yaml`
+- Update deployment image to the new commit tag
+- Wait for rollout completion
+
+### 4. Verify app in cluster
+```bash
+kubectl get pods -l app=resqnet
+kubectl get service resqnet-service
+```
 
 ## Terraform (Infrastructure)
 ```bash
