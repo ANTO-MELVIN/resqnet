@@ -5,6 +5,7 @@ const API_BASE_URL = 'http://127.0.0.1:5000';
 let currentUser = null;
 let authToken = null;
 let currentAlertFilter = 'all';
+let currentAlertId = null;
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
@@ -257,6 +258,7 @@ function displayAlerts(alerts) {
 
 async function viewAlertDetail(alertId) {
     try {
+        currentAlertId = alertId;
         const response = await fetch(`${API_BASE_URL}/api/alerts/${alertId}`);
         if (!response.ok) throw new Error('Alert not found');
 
@@ -369,8 +371,11 @@ function filterAlerts(status) {
     // Update button styles
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
+        const btnLabel = btn.textContent.trim().toLowerCase();
+        if (btnLabel === status) {
+            btn.classList.add('active');
+        }
     });
-    event.target.classList.add('active');
     
     fetchAlerts();
 }
@@ -462,9 +467,9 @@ async function deleteComment(commentId) {
         if (!response.ok) throw new Error('Failed to delete comment');
 
         alert('Comment deleted');
-        // Refresh current alert details
-        const alertId = new URLSearchParams(window.location.search).get('alertId');
-        if (alertId) viewAlertDetail(alertId);
+        if (currentAlertId) {
+            viewAlertDetail(currentAlertId);
+        }
     } catch (error) {
         alert('Failed to delete comment');
         console.error(error);

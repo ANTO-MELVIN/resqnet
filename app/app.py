@@ -9,6 +9,7 @@ from flask_cors import CORS
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 from werkzeug.security import generate_password_hash, check_password_hash
+from bson.objectid import ObjectId
 import certifi
 
 app = Flask(__name__)
@@ -260,6 +261,21 @@ def get_alert(alert_id):
         alert = alerts_collection.find_one({"id": alert_id}, {"_id": 0})
         if not alert:
             return jsonify({"error": "Alert not found"}), 404
+        photo_ids = alert.get("photos", [])
+        photos = []
+        if photo_ids:
+            for photo_id in photo_ids:
+                try:
+                    object_id = ObjectId(str(photo_id))
+                    photo_doc = comments_collection.find_one(
+                        {"_id": object_id, "type": "photo"},
+                        {"_id": 0, "data": 1, "caption": 1, "uploaded_at": 1},
+                    )
+                    if photo_doc:
+                        photos.append(serialize_doc(photo_doc))
+                except Exception:
+                    continue
+        alert["photos"] = photos
         return jsonify(serialize_doc(alert)), 200
     except RuntimeError as exc:
         return jsonify({"error": str(exc)}), 503
@@ -338,6 +354,7 @@ def upload_photo(alert_id):
 
         photo_doc = {
             "alert_id": alert_id,
+            "type": "photo",
             "data": photo_data,
             "caption": caption,
             "uploaded_at": datetime.now().isoformat(),
@@ -404,8 +421,7 @@ def add_comment(alert_id):
 def delete_comment(comment_id):
     try:
         require_db()
-        from bson.objectid import ObjectId
-        
+
         result = comments_collection.delete_one({"_id": ObjectId(comment_id)})
         
         if result.deleted_count == 0:
